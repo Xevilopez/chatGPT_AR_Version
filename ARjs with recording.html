@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <script src="https://cdn.jsdelivr.net/npm/ar.js@3.0.0/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.0.4/dist/aframe.min.js"></script>
+  <script>
+    AFRAME.registerComponent('recording-button', {
+      init: function () {
+        var recording = false;
+        var button = this.el;
+        var video = document.createElement('video');
+        var stream;
+
+        button.addEventListener('click', function () {
+          if (!recording) {
+            navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+              .then(function (s) {
+                stream = s;
+                video.srcObject = stream;
+                video.play();
+                recording = true;
+                button.setAttribute('material', 'color', 'red');
+              });
+          } else {
+            stream.getTracks().forEach(function (track) {
+              track.stop();
+            });
+            video.srcObject = null;
+            recording = false;
+            button.setAttribute('material', 'color', 'green');
+            saveVideo(video);
+          }
+        });
+      }
+    });
+    
+    function saveVideo(video) {
+        var file = new File([video], "video.webm", {
+            type: "video/webm"
+        });
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        var url = window.URL.createObjectURL(file);
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+  </script>
+  <body style='margin : 0px; overflow: hidden;'>
+    <a-scene embedded arjs='sourceType: webcam;'>
+      <a-marker preset='hiro'>
+        <a-box position='0 0.5 0' material='color: blue;'></a-box>
+      </a-marker>
+      <a-entity camera></a-entity>
+      <a-entity position="0 -1 -2">
+        <a-camera>
+          <a-entity position="0 0 -1"
+                    geometry="primitive: circle; radius: 0.4"
+                    material="color: green"
+                    recording-button></a-entity>
+        </a-camera>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>
